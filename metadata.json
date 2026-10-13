@@ -1,0 +1,6 @@
+{
+  "name": "MatchFit - Fútbol Sala & F9 Performance",
+  "description": "Gestión nutricional adaptada, rutinas de acondicionamiento físico con protección articular y evaluación de rendimiento en cancha para fútbol sala y fútbol 9.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
