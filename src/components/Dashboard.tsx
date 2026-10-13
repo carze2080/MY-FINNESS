@@ -10,7 +10,8 @@ import {
   CheckCircle2, 
   Sparkles,
   HeartPulse,
-  Plus
+  Plus,
+  ChefHat
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -172,11 +173,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
               />
             </div>
           </div>
-          <div className="mt-4 pt-3 border-t border-zinc-800 text-xs text-zinc-400 flex items-center justify-between">
-            <span>Proteína hoy: <strong className="text-zinc-200">{proteinToday}g</strong></span>
-            <span className="text-zinc-500">
-              {dayType === 'match_day' ? 'Modo Carga Pre-Partido' : 'Déficit Controlado'}
-            </span>
+          <div className="mt-4 pt-3 border-t border-zinc-800 space-y-2">
+            <div className="text-xs text-zinc-400 flex items-center justify-between">
+              <span>Proteína hoy: <strong className="text-zinc-200">{proteinToday}g</strong></span>
+              <span className="text-zinc-500">
+                {dayType === 'match_day' ? 'Modo Carga Pre-Partido' : 'Déficit Controlado'}
+              </span>
+            </div>
+            <button
+              onClick={() => onNavigate('diet')}
+              className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <ChefHat className="w-3.5 h-3.5" />
+              <span>🍳 Chef: Recetas con lo que tengo en casa</span>
+            </button>
           </div>
         </div>
 

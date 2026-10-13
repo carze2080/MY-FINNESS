@@ -127,3 +127,19 @@ export interface RecipePreset {
   keyBenefit: string;
   isAntiInflammatory: boolean;
 }
+
+export interface GeneratedRecipe {
+  id: string;
+  title: string;
+  mealType: 'breakfast' | 'lunch' | 'pre_match' | 'post_match' | 'dinner' | 'snack';
+  calories: number;
+  proteinG: number;
+  carbsG: number;
+  fatsG: number;
+  prepTimeMinutes: number;
+  ingredientsUsed: string[];
+  steps: string[];
+  footballBenefit: string;
+  isAntiInflammatory: boolean;
+}
+

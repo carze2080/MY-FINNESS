@@ -173,6 +173,141 @@ Responde únicamente con el JSON válido.`;
   res.json({ analysis });
 });
 
+// API endpoint for generating recipes based on available home ingredients
+app.post('/api/ai/recipe-generator', async (req: Request, res: Response) => {
+  const { ingredients, mealGoal, playerProfile } = req.body;
+  if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
+    return res.status(400).json({ error: 'Ingredientes no proporcionados' });
+  }
+
+  if (aiClient) {
+    try {
+      const prompt = `${SYSTEM_INSTRUCTION}
+
+INGREDIENTES DISPONIBLES EN CASA DEL USUARIO:
+${ingredients.join(', ')}
+
+OBJETIVO / MOMENTO DE LA COMIDA:
+${mealGoal || 'Cualquiera (Nutritiva y saludable)'}
+
+PERFIL DEL JUGADOR:
+${JSON.stringify(playerProfile || { age: 30, weight: 120, sports: ['Fútbol Sala', 'Fútbol 9'] }, null, 2)}
+
+INSTRUCCIONES:
+Genera exactamente 2 o 3 recetas prácticas, deliciosas y rápidas utilizando PRINCIPALMENTE los ingredientes que el usuario tiene en casa (puede sugerir sal, pimienta, agua o condimentos básicos comunes).
+Cada receta debe estar pensada para un jugador de 30 años y 120kg (alta saciedad, proteína para conservar masa muscular de piernas, y nutrientes digestivos para no estar pesado al jugar en sala o F9).
+
+Responde ÚNICAMENTE con un JSON válido con la siguiente estructura:
+{
+  "recipes": [
+    {
+      "id": "rec-1",
+      "title": "Nombre llamativo de la receta",
+      "mealType": "lunch" | "dinner" | "pre_match" | "post_match" | "breakfast" | "snack",
+      "calories": 480,
+      "proteinG": 38,
+      "carbsG": 45,
+      "fatsG": 12,
+      "prepTimeMinutes": 15,
+      "ingredientsUsed": ["ingrediente 1", "ingrediente 2"],
+      "steps": ["Paso 1...", "Paso 2...", "Paso 3..."],
+      "footballBenefit": "Aporte de glucógeno para Fútbol Sala sin reflujo",
+      "isAntiInflammatory": true
+    }
+  ]
+}`;
+
+      const response = await callGeminiWithTimeout(() =>
+        aiClient!.models.generateContent({
+          model: 'gemini-3.8-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json'
+          }
+        })
+      );
+
+      if (response?.text) {
+        const parsed = JSON.parse(response.text);
+        if (parsed.recipes) {
+          return res.json({ recipes: parsed.recipes });
+        }
+      }
+    } catch (err: any) {
+      console.warn('AI fallback on recipe generator:', err?.message || err);
+    }
+  }
+
+  // Fallback heuristic recipes based on typical ingredients
+  const ingStr = ingredients.join(' ').toLowerCase();
+  const recipes = [];
+
+  if (ingStr.includes('huevo') || ingStr.includes('egg')) {
+    recipes.push({
+      id: `rec-${Date.now()}-1`,
+      title: 'Tortilla Proteica con Vegetales Salteados',
+      mealType: mealGoal.includes('pre') ? 'pre_match' : 'dinner',
+      calories: 380,
+      proteinG: 28,
+      carbsG: 14,
+      fatsG: 18,
+      prepTimeMinutes: 10,
+      ingredientsUsed: ingredients.slice(0, 4),
+      steps: [
+        'Bate 3 huevos enteros con una pizca de sal y pimienta.',
+        'Saltea en una sartén con unas gotas de aceite tus ingredientes disponibles.',
+        'Vierte los huevos batidos, cocina 3 minutos a fuego medio y voltea con cuidado.'
+      ],
+      footballBenefit: 'Proteína de alto valor biológico para tus piernas sin pesadez digestiva en la cancha.',
+      isAntiInflammatory: true
+    });
+  }
+
+  if (ingStr.includes('arroz') || ingStr.includes('pasta') || ingStr.includes('avena')) {
+    recipes.push({
+      id: `rec-${Date.now()}-2`,
+      title: 'Salteado Energético para Rendimiento en Cancha',
+      mealType: 'lunch',
+      calories: 520,
+      proteinG: 34,
+      carbsG: 62,
+      fatsG: 12,
+      prepTimeMinutes: 15,
+      ingredientsUsed: ingredients,
+      steps: [
+        'Calienta una sartén con un chorrito de aceite.',
+        'Cocina la fuente de proteína disponible cortada en tiras.',
+        'Agrega la base de carbohidratos ya cocida y remueve a fuego vivo durante 4 minutos para integrar sabores.'
+      ],
+      footballBenefit: 'Glucógeno muscular directo para aguantar los cambios de ritmo de Fútbol Sala y F9.',
+      isAntiInflammatory: false
+    });
+  }
+
+  if (recipes.length === 0) {
+    recipes.push({
+      id: `rec-${Date.now()}-default`,
+      title: 'Plato Combinado Rápido del Deportista',
+      mealType: 'lunch',
+      calories: 450,
+      proteinG: 32,
+      carbsG: 40,
+      fatsG: 12,
+      prepTimeMinutes: 12,
+      ingredientsUsed: ingredients,
+      steps: [
+        'Corta los ingredientes en porciones uniformes.',
+        'Cocina a la plancha o saltea con especias aromáticas (orégano, ajo, cúrcuma).',
+        'Sirve acompañado de abundante agua para apoyar la digestión y articulaciones.'
+      ],
+      footballBenefit: 'Comida saciante y balanceada para acelerar el déficit calórico seguro a 120kg.',
+      isAntiInflammatory: true
+    });
+  }
+
+  res.json({ recipes });
+});
+
 // API health check
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
